@@ -21,7 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\" />
+    <None Update="booksSettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -38,8 +38,8 @@ namespace Books.BookManagement
                         Publisher = dataLine[5]
                     };
 
-                    SaveToDatabase(bookFromFile, db);
-                    numberRecordsDB++;
+                    if(SaveToDatabase(bookFromFile, db))
+                        numberRecordsDB++;
                 }
             }
             return numberRecordsDB;
@@ -55,7 +55,7 @@ namespace Books.BookManagement
                 throw new ArgumentException($"File {filePath} is empty");
         }
 
-        private static void SaveToDatabase(FileBook bookFromFile, BooksContext db)
+        private static bool SaveToDatabase(FileBook bookFromFile, BooksContext db)
         {
             if (!CheckIfDataExistsInDatabase(bookFromFile, db))
             {
@@ -70,7 +70,9 @@ namespace Books.BookManagement
                 };
                 db.Books.Add(newBook);
                 db.SaveChanges();
+                return true;
             }
+            return false;
         }
 
         private static bool CheckIfDataExistsInDatabase(FileBook bookFromFile, BooksContext db)
