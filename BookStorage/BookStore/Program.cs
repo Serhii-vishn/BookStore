@@ -1,79 +1,56 @@
 ﻿using Books.BookManagement;
 
-internal class Program
+namespace BookStore
 {
-    public static void Main()
+    internal class Program
     {
-        Console.WriteLine("\t\t\tConsole app for managing book data in the database");
-        Console.WriteLine("\t\t------------------------------------------------------------------");
-
-        switch (GetMenuOption())
+        public static void Main()
         {
-            case '1':
-                {
-                    try
-                    {
-                        string filePath = GetFilePathFromUser();
-                        var numberRecordsDB = BookDataProcessor.ReadFile_SaveToDB(filePath);
-                        Console.WriteLine($"Entries were made to the database: {numberRecordsDB}");
-                    }
-                    catch (FileNotFoundException ex)
-                    {
-                        Console.WriteLine("File not found: " + ex.Message);
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        Console.WriteLine("Error: " + ex.Message);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Unexpected error: " + ex.Message);
-                    }
-                    break;
-                }
-            case '2':
-                {
-                    break;
-                }
-            default:
-                {
-                    Console.WriteLine("Ivalid data");
-                    break;
-                }
-        }
+            BookDataProcessor.ShowBooks();
+            Console.ReadLine();
 
-        Console.ReadLine();
-    }
+            Console.WriteLine("\t\t\tConsole app for managing book data in the database");
+            Console.WriteLine("\t\t------------------------------------------------------------------");
 
-    public static char GetMenuOption()
-    {
-        char menuOption;
-        do
-        {
-            Console.WriteLine("\nAdd Books from File - 1");
-            Console.WriteLine("Search Books - 2");
-
-            Console.Write("Enter: ");
-            menuOption = Console.ReadKey().KeyChar;
-        } while (!menuOption.Equals('1') && !menuOption.Equals('2'));
-
-        return menuOption;
-    }
-
-    private static string GetFilePathFromUser()
-    {
-        string filePath;
-        do
-        {
-            Console.Write("\nEnter file path: ");
-            filePath = Console.ReadLine();
-
-            if (!File.Exists(filePath))
+            switch (AppUI.GetMenuOption())
             {
-                Console.WriteLine("Error: The entered file path is invalid or doesn't exist.");
-            }
-        } while (!File.Exists(filePath));
+                case '1':
+                    {
+                        try
+                        {
+                            string filePath = AppUI.GetFilePathFromUser();
+                            var numberRecordsDB = BookDataProcessor.ReadFile_SaveToDB(filePath);
 
-        return filePath;
+                            Console.WriteLine($"Entries were made to the database: {numberRecordsDB}");
+                        }
+                        catch (FileNotFoundException ex)
+                        {
+                            Console.WriteLine("File not found: " + ex.Message);
+                        }
+                        catch (ArgumentException ex)
+                        {
+                            Console.WriteLine("Error: " + ex.Message);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Unexpected error: " + ex.Message);
+                        }
+                        break;
+                    }
+                case '2':
+                    {
+
+                        Console.WriteLine("Press '+' if you want to add a parameter for search");
+                        break;
+                    }
+                default:
+                    {
+                        Console.WriteLine("Ivalid data");
+                        break;
+                    }
+            }
+
+            Console.ReadLine();
+        }
     }
 }
