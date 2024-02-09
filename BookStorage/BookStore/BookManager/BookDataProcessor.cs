@@ -1,5 +1,8 @@
 ﻿using Books.Data;
 using Books.Models;
+using BookStore.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace Books.BookManagement
 {
@@ -43,6 +46,18 @@ namespace Books.BookManagement
                 }
             }
             return numberRecordsDB;
+        }
+
+        public static List<string> GetAndSavedFilteredBooks()
+        {
+            using var db = new BooksContext();
+            var booksFilter = SetFilterParameters();
+
+            var filteredBooks = GetFilteredBooks(db, booksFilter);
+
+            SaveFilterBooksToCSV(filteredBooks);
+
+            return GetFilterNameLIST(filteredBooks);
         }
 
         private static void ValidateFilePath(string filePath)
@@ -137,6 +152,124 @@ namespace Books.BookManagement
 
                 return newPublisher;
             }
+        }
+
+        private static Filter SetFilterParameters()
+        {
+            var filter = new Filter();
+            Console.WriteLine("\nCan be left blank for any");
+            Console.Write("Title : ");
+            filter.Title = Console.ReadLine();
+
+            Console.Write("Genre: ");
+            filter.Genre = Console.ReadLine();
+
+            Console.Write("Author: ");
+            filter.Author = Console.ReadLine();
+
+            Console.Write("Publisher: ");
+            filter.Publisher = Console.ReadLine();
+
+            Console.Write("Min pages: ");
+            if (int.TryParse(Console.ReadLine(), out int intValue))
+                filter.MoreThanPages = intValue;
+
+            Console.Write("Max pages: ");
+            if (int.TryParse(Console.ReadLine(), out intValue))
+                filter.LessThanPages = intValue;
+
+            Console.Write("Published Before Date: ");
+            if (DateTime.TryParse(Console.ReadLine(), out DateTime dateTimeValue))
+                filter.PublishedBefore = dateTimeValue;
+
+            Console.Write("Published After Date: ");
+            if (DateTime.TryParse(Console.ReadLine(), out dateTimeValue))
+                filter.PublishedAfter = dateTimeValue;
+
+            return filter;
+        }
+
+        private static IQueryable<Book> GetFilteredBooks(BooksContext db, Filter filter)
+        {
+            IQueryable<Book> filtredBooks = db.Books
+                                    .Include(u => u.Genre)
+                                    .Include(u => u.Author)
+                                    .Include(u => u.Publisher);
+
+            if (!string.IsNullOrEmpty(filter.Title))
+                filtredBooks = filtredBooks
+                            .Where(p => EF.Functions.Like(p.Title!, $"{filter.Title}"));
+
+            if (!string.IsNullOrEmpty(filter.Genre))
+                filtredBooks = filtredBooks
+                            .Where(p => EF.Functions.Like(p.Genre.Name!, $"{filter.Genre}"));
+
+            if (!string.IsNullOrEmpty(filter.Author))
+                filtredBooks = filtredBooks
+                            .Where(p => EF.Functions.Like(p.Author.Name!, $"{filter.Author}"));
+
+            if (!string.IsNullOrEmpty(filter.Publisher))
+                filtredBooks = filtredBooks
+                            .Where(p => EF.Functions.Like(p.Publisher.Name!, $"{filter.Publisher}"));
+
+            if (filter.MoreThanPages.HasValue)
+                filtredBooks = filtredBooks
+                          .Where(b => b.Pages >= filter.MoreThanPages);
+
+            if (filter.LessThanPages.HasValue)
+                filtredBooks = filtredBooks
+                          .Where(b => b.Pages <= filter.LessThanPages);
+
+            if (filter.PublishedBefore.HasValue)
+                filtredBooks = filtredBooks
+                          .Where(b => b.ReleaseDate <= filter.PublishedBefore);
+
+            if (filter.PublishedAfter.HasValue)
+                filtredBooks = filtredBooks
+                          .Where(b => b.ReleaseDate >= filter.PublishedAfter);
+
+            return filtredBooks;
+        }
+
+        private static void SaveFilterBooksToCSV(IEnumerable<Book> books)
+        {
+            string filename = $"Books_{DateTime.Now:yyyyMMddHHmmss}.csv";
+
+            var csv = new StringBuilder();
+            csv.AppendLine("Title, Genre, Author, Publisher, Pages, PublishedDate");
+
+            foreach (var book in books)
+            {
+                csv.AppendLine($"{EscapeCsvField(book.Title)}, {EscapeCsvField(book.Genre.Name)}, " +
+                                    $"{EscapeCsvField(book.Author.Name)}, {EscapeCsvField(book.Publisher.Name)}, " +
+                                        $"{book.Pages}, {book.ReleaseDate:yyyy-MM-dd}");
+            }
+
+            File.WriteAllText(filename, csv.ToString());
+        }
+
+        private static string EscapeCsvField(string field)
+        {
+            if (field == null)
+                return "";
+
+            if (field.Contains("\""))
+                field = field.Replace("\"", "\"\"");
+
+            if (field.Contains(",") || field.Contains("\r") || field.Contains("\n"))
+                field = $"\"{field}\"";
+
+            return field;
+        }
+
+        private static List<string> GetFilterNameLIST(IEnumerable<Book> filteredBooks)
+        {
+            var nameBooksList = new List<string>();
+            foreach (var book in filteredBooks)
+            {
+                nameBooksList.Add(book.Title);
+            }
+            return nameBooksList;
         }
     }
 }

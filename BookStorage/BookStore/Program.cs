@@ -6,9 +6,6 @@ namespace BookStore
     {
         public static void Main()
         {
-            BookDataProcessor.ShowBooks();
-            Console.ReadLine();
-
             Console.WriteLine("\t\t\tConsole app for managing book data in the database");
             Console.WriteLine("\t\t------------------------------------------------------------------");
 
@@ -39,8 +36,20 @@ namespace BookStore
                     }
                 case '2':
                     {
+                        try
+                        {
+                            var filteredBooks = BookDataProcessor.GetAndSavedFilteredBooks();
+                            Console.WriteLine($"Found by filter {filteredBooks.Count}:");
 
-                        Console.WriteLine("Press '+' if you want to add a parameter for search");
+                            foreach ( var filteredBook in filteredBooks )
+                            {
+                                Console.WriteLine( filteredBook );
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Unexpected error: " + ex.Message);
+                        }
                         break;
                     }
                 default:
@@ -49,7 +58,6 @@ namespace BookStore
                         break;
                     }
             }
-
             Console.ReadLine();
         }
     }
