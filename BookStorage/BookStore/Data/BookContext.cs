@@ -19,7 +19,7 @@ namespace Books.Data
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             var config = new ConfigurationBuilder()
-                        .AddJsonFile("booksSettings.json")
+                        .AddJsonFile("appSettings.json")
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .Build();
 
