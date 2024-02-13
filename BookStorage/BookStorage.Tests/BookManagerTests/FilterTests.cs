@@ -1,4 +1,4 @@
-﻿using BookStore.BookManager;
+﻿using BookStorage.BookManager;
 
 namespace BookStorage.Tests.BookManager
 {
