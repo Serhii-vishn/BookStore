@@ -8,7 +8,7 @@ namespace BookStore
     {
         public static void Main()
         {
-            Console.WriteLine("\t\t\tConsole app for managing book data in the database");
+            Console.WriteLine("\t\t\tConsole app for managing book data in the database");//TODO add console insert data to db
             Console.WriteLine("\t\t------------------------------------------------------------------");
 
             switch (AppUI.GetMenuOption())
