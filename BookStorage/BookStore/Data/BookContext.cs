@@ -4,14 +4,14 @@ using Microsoft.Extensions.Configuration;
 
 namespace Books.Data
 {
-    public sealed class BooksContext : DbContext
+    public sealed class BookContext : DbContext
     {
         public DbSet<Book> Books { get; set; } = null!;
         public DbSet<Author> Authors { get; set; } = null!;
         public DbSet<Genre> Genres { get; set; } = null!;
         public DbSet<Publisher> Publishers { get; set; } = null!;
 
-        public BooksContext()
+        public BookContext()
             : base()
         {
             Database.EnsureCreated();
@@ -19,7 +19,7 @@ namespace Books.Data
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             var config = new ConfigurationBuilder()
-                        .AddJsonFile("booksSettings.json")
+                        .AddJsonFile("appSettings.json")
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .Build();
 

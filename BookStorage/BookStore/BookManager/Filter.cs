@@ -1,6 +1,6 @@
-﻿namespace BookStore.Models
+﻿namespace BookStorage.BookManager
 {
-    class Filter
+    public class Filter
     {
         public string? Title { get; set; }
         public string? Genre { get; set; }

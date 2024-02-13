@@ -1,66 +1,58 @@
 ﻿using Books.Data;
 using Books.Models;
-using BookStore.Models;
+using BookStore.BookManager;
+using CsvHelper.Configuration;
+using CsvHelper;
 using Microsoft.EntityFrameworkCore;
-using System.Text;
+using System.Globalization;
+using BookStore.Services;
+using System.Formats.Asn1;
+using BookStorage.BookManager;
 
 namespace Books.BookManagement
 {
-    public static class BookDataProcessor
+    public class BookDataProcessor
     {
-        private sealed class FileBook
-        {
-            public string Title { get; set; } = null!;
-            public int Pages { get; set; }
-            public string Genre { get; set; } = null!;
-            public string Author { get; set; } = null!;
-            public string Publisher { get; set; } = null!;
-            public DateTime ReleaseDate { get; set; }
-        }
+        private readonly AuthorService _authorService;
+        private readonly GenreService _genreService;
+        private readonly PublisherService _publisherService;
+        private readonly BookContext _dbContext;
 
-        public static uint ReadFile_SaveToDB(string filePath)
+        public BookDataProcessor(AuthorService authorService, GenreService genreService, PublisherService publisherService, BookContext dbContext)
         {
-            uint numberRecordsDB = 0;
+            _authorService = authorService;
+            _genreService = genreService;
+            _publisherService = publisherService;
+            _dbContext = dbContext;
+        }
+        public int ImoportBooksFromCsv(string filePath)
+        {
+            int numberRecordsDB = 0;
             ValidateFilePath(filePath);
 
-            var linesFromFile = File.ReadAllLines(filePath);
+            var booksFromFile = ReadBooksFromCSV(filePath);
 
-            using var db = new BooksContext();
-            foreach (var line in linesFromFile)
+            foreach (var book in booksFromFile)
             {
-                string[] dataLine = line.Split(',');
-                if (int.TryParse(dataLine[1], out _) && DateTime.TryParse(dataLine[3], out _))
-                {
-                    var bookFromFile = new FileBook()
-                    {
-                        Title = dataLine[0],
-                        Pages = int.Parse(dataLine[1]),
-                        Genre = dataLine[2],
-                        ReleaseDate = DateTime.Parse(dataLine[3]),
-                        Author = dataLine[4],
-                        Publisher = dataLine[5]
-                    };
-
-                    if(SaveToDatabase(bookFromFile, db))
-                        numberRecordsDB++;
-                }
+                if (SaveToDatabase(book, _dbContext))
+                    numberRecordsDB++;
             }
+
             return numberRecordsDB;
         }
 
-        public static List<string> GetAndSavedFilteredBooks()
+        public List<string> GetFilteredBooks()
         {
-            using var db = new BooksContext();
             var booksFilter = SetFilterParameters();
 
-            var filteredBooks = GetFilteredBooks(db, booksFilter);
+            var filteredBooks = GetFilteredBooks(_dbContext, booksFilter);
 
             SaveFilterBooksToCSV(filteredBooks);
 
             return GetFilterNameLIST(filteredBooks);
         }
 
-        private static void ValidateFilePath(string filePath)
+        private void ValidateFilePath(string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentException("File name is empty or null");
@@ -70,7 +62,17 @@ namespace Books.BookManagement
                 throw new ArgumentException($"File {filePath} is empty");
         }
 
-        private static bool SaveToDatabase(FileBook bookFromFile, BooksContext db)
+        private static IEnumerable<CsvBookModel> ReadBooksFromCSV(string filePath)
+        {
+            using var reader = new StreamReader(filePath);
+            using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+            csv.Context.RegisterClassMap<CsvBookModelMap>();
+            var records = csv.GetRecords<CsvBookModel>().ToList();
+
+            return records;
+        }
+
+        private bool SaveToDatabase(CsvBookModel bookFromFile, BookContext db)
         {
             if (!CheckIfDataExistsInDatabase(bookFromFile, db))
             {
@@ -78,10 +80,10 @@ namespace Books.BookManagement
                 {
                     Title = bookFromFile.Title,
                     Pages = bookFromFile.Pages,
-                    Genre = FindOrCreateGenre(bookFromFile.Genre, db),
+                    Genre = _genreService.FindOrCreateGenre(bookFromFile.Genre, db),
                     ReleaseDate = bookFromFile.ReleaseDate,
-                    Author = FindOrCreateAuthor(bookFromFile.Author, db),
-                    Publisher = FindOrCreatePublisher(bookFromFile.Publisher, db)
+                    Author = _authorService.FindOrCreateAuthor(bookFromFile.Author, db),
+                    Publisher = _publisherService.FindOrCreatePublisher(bookFromFile.Publisher, db)
                 };
                 db.Books.Add(newBook);
                 db.SaveChanges();
@@ -90,7 +92,7 @@ namespace Books.BookManagement
             return false;
         }
 
-        private static bool CheckIfDataExistsInDatabase(FileBook bookFromFile, BooksContext db)
+        private bool CheckIfDataExistsInDatabase(CsvBookModel bookFromFile, BookContext db)
         {
             return db.Books.Any(x => x.Title == bookFromFile.Title
                                     && x.Pages == bookFromFile.Pages
@@ -100,61 +102,7 @@ namespace Books.BookManagement
                                     && x.Publisher.Name == bookFromFile.Publisher);
         }
 
-        private static Genre FindOrCreateGenre(string name, BooksContext db)
-        {
-            var existingGenre = db.Genres.FirstOrDefault(a => a.Name == name);
-
-            if (existingGenre != null)
-            {
-                return existingGenre;
-            }
-            else
-            {
-                var newGenre = new Genre { Name = name };
-                db.Genres.Add(newGenre);
-                db.SaveChanges();
-
-                return newGenre;
-            }
-        }
-
-        private static Author FindOrCreateAuthor(string name, BooksContext db)
-        {
-            var existingAuthor = db.Authors.FirstOrDefault(a => a.Name == name);
-
-            if (existingAuthor != null)
-            {
-                return existingAuthor;
-            }
-            else
-            {
-                var newAuthor = new Author { Name = name };
-                db.Authors.Add(newAuthor);
-                db.SaveChanges();
-
-                return newAuthor;
-            }
-        }
-
-        private static Publisher FindOrCreatePublisher(string name, BooksContext db)
-        {
-            var existingPublisher = db.Publishers.FirstOrDefault(a => a.Name == name);
-
-            if (existingPublisher != null)
-            {
-                return existingPublisher;
-            }
-            else
-            {
-                var newPublisher = new Publisher { Name = name };
-                db.Publishers.Add(newPublisher);
-                db.SaveChanges();
-
-                return newPublisher;
-            }
-        }
-
-        private static Filter SetFilterParameters()
+        private Filter SetFilterParameters()
         {
             var filter = new Filter();
             Console.WriteLine("\nCan be left blank for any");
@@ -189,7 +137,7 @@ namespace Books.BookManagement
             return filter;
         }
 
-        private static IQueryable<Book> GetFilteredBooks(BooksContext db, Filter filter)
+        private IQueryable<Book> GetFilteredBooks(BookContext db, Filter filter)
         {
             IQueryable<Book> filtredBooks = db.Books
                                     .Include(u => u.Genre)
@@ -231,38 +179,30 @@ namespace Books.BookManagement
             return filtredBooks;
         }
 
-        private static void SaveFilterBooksToCSV(IEnumerable<Book> books)
+        private void SaveFilterBooksToCSV(IEnumerable<Book> books)
         {
             string filename = $"Books_{DateTime.Now:yyyyMMddHHmmss}.csv";
 
-            var csv = new StringBuilder();
-            csv.AppendLine("Title, Genre, Author, Publisher, Pages, PublishedDate");
-
-            foreach (var book in books)
+            var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
-                csv.AppendLine($"{EscapeCsvField(book.Title)}, {EscapeCsvField(book.Genre.Name)}, " +
-                                    $"{EscapeCsvField(book.Author.Name)}, {EscapeCsvField(book.Publisher.Name)}, " +
-                                        $"{book.Pages}, {book.ReleaseDate:yyyy-MM-dd}");
-            }
+                HasHeaderRecord = true,
+                Delimiter = ",",
+            };
 
-            File.WriteAllText(filename, csv.ToString());
+            using var writer = new StreamWriter(filename);
+            using var csv = new CsvWriter(writer, configuration);
+            csv.WriteRecords(books.Select(book => new
+            {
+                Title = book.Title,
+                Genre = book.Genre.Name,
+                Author = book.Author.Name,
+                Publisher = book.Publisher.Name,
+                Pages = book.Pages,
+                PublishedDate = book.ReleaseDate.ToString("yyyy-MM-dd")
+            }));
         }
 
-        private static string EscapeCsvField(string field)
-        {
-            if (field == null)
-                return "";
-
-            if (field.Contains("\""))
-                field = field.Replace("\"", "\"\"");
-
-            if (field.Contains(",") || field.Contains("\r") || field.Contains("\n"))
-                field = $"\"{field}\"";
-
-            return field;
-        }
-
-        private static List<string> GetFilterNameLIST(IEnumerable<Book> filteredBooks)
+        private List<string> GetFilterNameLIST(IEnumerable<Book> filteredBooks)
         {
             var nameBooksList = new List<string>();
             foreach (var book in filteredBooks)

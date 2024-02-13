@@ -1,6 +1,5 @@
 ﻿using Books.Data;
 using Books.Models;
-using BookStore.Models;
 
 namespace BookStore
 {

@@ -1,4 +1,6 @@
 ﻿using Books.BookManagement;
+using Books.Data;
+using BookStore.Services;
 
 namespace BookStore
 {
@@ -6,7 +8,7 @@ namespace BookStore
     {
         public static void Main()
         {
-            Console.WriteLine("\t\t\tConsole app for managing book data in the database");
+            Console.WriteLine("\t\t\tConsole app for managing book data in the database");//TODO add console insert data to db
             Console.WriteLine("\t\t------------------------------------------------------------------");
 
             switch (AppUI.GetMenuOption())
@@ -15,8 +17,15 @@ namespace BookStore
                     {
                         try
                         {
+                            var dbContext = new BookContext();
+
+                            var authorService = new AuthorService();
+                            var genreService = new GenreService();
+                            var publisherService = new PublisherService();
+
+                            BookDataProcessor bookDataProcessor = new(authorService, genreService, publisherService, dbContext);
                             string filePath = AppUI.GetFilePathFromUser();
-                            var numberRecordsDB = BookDataProcessor.ReadFile_SaveToDB(filePath);
+                            var numberRecordsDB = bookDataProcessor.ImoportBooksFromCsv(filePath);
 
                             Console.WriteLine($"Entries were made to the database: {numberRecordsDB}");
                         }
@@ -38,12 +47,19 @@ namespace BookStore
                     {
                         try
                         {
-                            var filteredBooks = BookDataProcessor.GetAndSavedFilteredBooks();
+                            var dbContext = new BookContext();
+
+                            var authorService = new AuthorService();
+                            var genreService = new GenreService();
+                            var publisherService = new PublisherService();
+
+                            BookDataProcessor bookDataProcessor = new(authorService, genreService, publisherService, dbContext);
+                            var filteredBooks = bookDataProcessor.GetFilteredBooks();
                             Console.WriteLine($"Found by filter {filteredBooks.Count}:");
 
-                            foreach ( var filteredBook in filteredBooks )
+                            foreach (var filteredBook in filteredBooks)
                             {
-                                Console.WriteLine( filteredBook );
+                                Console.WriteLine(filteredBook);
                             }
                         }
                         catch (Exception ex)
