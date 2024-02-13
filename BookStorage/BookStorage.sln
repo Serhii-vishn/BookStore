@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookStore", "BookStore\BookStore.csproj", "{DEC91F1C-B105-403B-A7DB-73DE1E3DE652}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BookStorage", "BookStore\BookStorage.csproj", "{DEC91F1C-B105-403B-A7DB-73DE1E3DE652}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookStorage.Tests", "BookStorage.Tests\BookStorage.Tests.csproj", "{F536770D-EA7E-45FF-86F3-408BE0075AB2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BookStorage.Tests", "BookStorage.Tests\BookStorage.Tests.csproj", "{F536770D-EA7E-45FF-86F3-408BE0075AB2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
