@@ -9,10 +9,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace BookStore.Migrations
+namespace BookStorage.Migrations
 {
-    [DbContext(typeof(BooksContext))]
-    [Migration("20240207214942_InitialCommit")]
+    [DbContext(typeof(BookContext))]
+    [Migration("20240213200726_InitialCommit")]
     partial class InitialCommit
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace BookStore.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.1")
+                .HasAnnotation("ProductVersion", "8.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
