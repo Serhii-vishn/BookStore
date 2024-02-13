@@ -1,4 +1,4 @@
-﻿namespace BookStore.Models
+﻿namespace BookStorage.BookManager
 {
     class Filter
     {
